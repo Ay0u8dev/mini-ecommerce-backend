@@ -1,0 +1,22 @@
+services:
+  # PostgreSQL for User Service
+  user-db:
+    image: postgres:latest
+    container_name: user-db
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - user_data:/var/lib/postgresql
+    networks:
+      - ecommerce-net
+
+volumes:
+  user_data:
+
+networks:
+  ecommerce-net:
+    driver: bridge
