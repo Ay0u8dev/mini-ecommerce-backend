@@ -68,11 +68,15 @@ class ProductController {
         return ResponseEntity.ok(productService.getAvailableProducts());
     }
 
-    // PATCH /products/{id}/stock - Update stock
-    @PatchMapping("/{id}/stock")
-    public ResponseEntity<Product> updateStock(
+    // Put /products/{id}/stock - Update stock
+    @PutMapping("/{id}/stock")
+    public ResponseEntity<?> updateStock(
             @PathVariable Long id,
             @RequestParam Integer quantity) {
-        return ResponseEntity.ok(productService.updateStock(id, quantity));
+        try {
+            return ResponseEntity.ok(productService.updateStock(id, quantity));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

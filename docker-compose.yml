@@ -29,9 +29,24 @@ services:
     networks:
       - ecommerce-net
 
+  order-db:
+    image: postgres:latest
+    container_name: order-db
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - order_data:/var/lib/postgresql
+    networks:
+      - ecommerce-net
+
 volumes:
   user_data:
   product_data:
+  order_data:
 
 networks:
   ecommerce-net:
