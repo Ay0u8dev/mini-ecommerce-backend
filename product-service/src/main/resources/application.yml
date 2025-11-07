@@ -1,13 +1,13 @@
 server:
-  port: 8081
+  port: 8082
 
 spring:
   application:
-    name: user-service
+    name: product-service
 
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/users_db
+    url: jdbc:postgresql://localhost:5433/products_db
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -15,8 +15,8 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: update  # Auto-create tables from entities
-    show-sql: true      # Show SQL queries in console
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
