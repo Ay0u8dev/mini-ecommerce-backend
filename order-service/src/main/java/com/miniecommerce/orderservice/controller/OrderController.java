@@ -33,13 +33,8 @@ public class OrderController {
     // POST /orders - Create new order
     @PostMapping
     public ResponseEntity<?> createOrder(@Valid @RequestBody OrderRequest request) {
-        try {
-            Order createdOrder = orderService.createOrder(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Order createdOrder = orderService.createOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
 
     // GET /orders/user/{userId} - Get orders by user
