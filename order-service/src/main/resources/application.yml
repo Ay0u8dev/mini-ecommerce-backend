@@ -38,3 +38,73 @@ feign:
         connectTimeout: 5000
         readTimeout: 5000
 
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      userService:
+        register-health-indicator: true
+        sliding-window-size: 10                    # Number of calls to track
+        minimum-number-of-calls: 5                 # Min calls before calculating failure rate
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 10s           # Wait before trying again
+        failure-rate-threshold: 50                 # Open circuit if 50% fail
+        event-consumer-buffer-size: 10
+        record-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+          - feign.FeignException
+        ignore-exceptions:
+          - com.miniecommerce.orderservice.exception.ResourceNotFoundException
+
+      productService:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 10s
+        failure-rate-threshold: 50
+        event-consumer-buffer-size: 10
+        record-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+          - feign.FeignException
+        ignore-exceptions:
+          - com.miniecommerce.orderservice.exception.ResourceNotFoundException
+
+  # Retry Configuration
+  retry:
+    instances:
+      userService:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+      productService:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+
+  # Rate Limiter
+  ratelimiter:
+    instances:
+      orderService:
+        limit-for-period: 10
+        limit-refresh-period: 1s
+        timeout-duration: 0s
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,circuitbreakers,circuitbreakerevents,ratelimiters,retries
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
