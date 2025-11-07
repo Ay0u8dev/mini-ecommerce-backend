@@ -42,7 +42,7 @@ public class OrderService {
     }
 
     @Transactional
-    @CircuitBreaker(name = "orderService", fallbackMethod = "createOrderFallback")
+    @CircuitBreaker(name = "orderService")
     @RateLimiter(name = "orderService")
     public Order createOrder(OrderRequest request) {
         log.info("Creating order for user: {} and product: {}",
@@ -126,24 +126,24 @@ public class OrderService {
     }
 
     // Fallback method for createOrder
-    public Order createOrderFallback(OrderRequest request, Exception ex) {
-        log.error("Circuit breaker activated for createOrder. Creating fallback order", ex);
-
-        // Create a pending order that can be processed later
-        Order fallbackOrder = new Order();
-        fallbackOrder.setUserId(request.getUserId());
-        fallbackOrder.setProductId(request.getProductId());
-        fallbackOrder.setQuantity(request.getQuantity());
-        fallbackOrder.setTotalPrice(0.0);
-        fallbackOrder.setStatus("PENDING_RETRY");
-        fallbackOrder.setUserName("Unknown - Service Down");
-        fallbackOrder.setProductName("Unknown - Service Down");
-
-        Order saved = orderRepository.save(fallbackOrder);
-        log.info("Fallback order created with id: {} and status: PENDING_RETRY", saved.getId());
-
-        return saved;
-    }
+//    public Order createOrderFallback(OrderRequest request, Exception ex) {
+//        log.error("Circuit breaker activated for createOrder. Creating fallback order", ex);
+//
+//        // Create a pending order that can be processed later
+//        Order fallbackOrder = new Order();
+//        fallbackOrder.setUserId(request.getUserId());
+//        fallbackOrder.setProductId(request.getProductId());
+//        fallbackOrder.setQuantity(request.getQuantity());
+//        fallbackOrder.setTotalPrice(0.0);
+//        fallbackOrder.setStatus("PENDING_RETRY");
+//        fallbackOrder.setUserName("Unknown - Service Down");
+//        fallbackOrder.setProductName("Unknown - Service Down");
+//
+//        Order saved = orderRepository.save(fallbackOrder);
+//        log.info("Fallback order created with id: {} and status: PENDING_RETRY", saved.getId());
+//
+//        return saved;
+//    }
 
     @CircuitBreaker(name = "userService")
     @Retry(name = "userService")

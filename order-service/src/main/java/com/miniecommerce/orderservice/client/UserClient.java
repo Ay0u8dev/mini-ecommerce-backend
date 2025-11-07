@@ -11,17 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface UserClient {
 
     @GetMapping("/users/{id}")
-    @CircuitBreaker(name = "userService", fallbackMethod = "getUserByIdFallback")
+    @CircuitBreaker(name = "userService", fallbackMethod = "getUserFallback")
     @Retry(name = "userService")
     UserDTO getUserById(@PathVariable Long id);
 
-    // Fallback method - called when circuit is open
-    default UserDTO getUserByIdFallback(Long id, Exception ex) {
-        UserDTO fallbackUser = new UserDTO();
-        fallbackUser.setId(id);
-        fallbackUser.setName("User Service Unavailable");
-        fallbackUser.setEmail("unavailable@service.down");
-        fallbackUser.setPhone("N/A");
-        return fallbackUser;
-    }
 }

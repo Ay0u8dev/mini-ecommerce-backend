@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface ProductClient {
 
     @GetMapping("/products/{id}")
-    @CircuitBreaker(name = "productService", fallbackMethod = "getProductByIdFallback")
+    @CircuitBreaker(name = "productService", fallbackMethod = "getProductFallback")
     @Retry(name = "productService")
     ProductDTO getProductById(@PathVariable Long id);
 
@@ -22,20 +22,4 @@ public interface ProductClient {
     @Retry(name = "productService")
     ProductDTO updateStock(@PathVariable Long id, @RequestParam Integer quantity);
 
-    // Fallback methods
-    default ProductDTO getProductByIdFallback(Long id, Exception ex) {
-        ProductDTO fallbackProduct = new ProductDTO();
-        fallbackProduct.setId(id);
-        fallbackProduct.setName("Product Service Unavailable");
-        fallbackProduct.setDescription("Service is temporarily down");
-        fallbackProduct.setPrice(0.0);
-        fallbackProduct.setStock(0);
-        fallbackProduct.setCategory("N/A");
-        return fallbackProduct;
-    }
-
-    default ProductDTO updateStockFallback(Long id, Integer quantity, Exception ex) {
-        // For stock updates, we should throw an exception rather than silently fail
-        throw new RuntimeException("Product service unavailable. Stock update failed.");
-    }
 }
