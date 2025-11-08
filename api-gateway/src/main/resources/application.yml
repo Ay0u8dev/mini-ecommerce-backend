@@ -5,6 +5,12 @@ spring:
   application:
     name: api-gateway
 
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
   # Spring Cloud Gateway Configuration
   cloud:
     gateway:
@@ -22,7 +28,7 @@ spring:
           predicates:
             - Path=/api/users/**
           filters:
-            - RewritePath=/api/users/(?<segment>.*), /users/$\{segment}
+            - RewritePath=/api/users(?<segment>/?.*), /users$\{segment}
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
@@ -40,7 +46,7 @@ spring:
           predicates:
             - Path=/api/products/**
           filters:
-            - RewritePath=/api/products/(?<segment>.*), /products/$\{segment}
+            - RewritePath=/api/products(?<segment>/?.*), /products$\{segment}
             - name: CircuitBreaker
               args:
                 name: productServiceCircuitBreaker
@@ -58,7 +64,7 @@ spring:
           predicates:
             - Path=/api/orders/**
           filters:
-            - RewritePath=/api/orders/(?<segment>.*), /orders/$\{segment}
+            - RewritePath=/api/orders(?<segment>/?.*), /orders$\{segment}
             - name: CircuitBreaker
               args:
                 name: orderServiceCircuitBreaker
@@ -76,7 +82,7 @@ spring:
           predicates:
             - Path=/api/health/**
           filters:
-            - RewritePath=/api/health/(?<segment>.*), /health/$\{segment}
+            - RewritePath=/api/health(?<segment>/?.*), /health$\{segment}
 
       # Global CORS Configuration
       globalcors:
