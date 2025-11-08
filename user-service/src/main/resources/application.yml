@@ -1,31 +1,43 @@
-server:
-  port: 8081
+# All configurations now come from Config Server
+# This file can be empty or contain only local overrides
 
-spring:
-  application:
-    name: user-service
+# Optional: Local development overrides
+# spring:
+#   profiles:
+#     active: dev
 
-  # Database Configuration
-  datasource:
-    url: jdbc:postgresql://localhost:5432/users_db
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-    driver-class-name: org.postgresql.Driver
 
-  # JPA Configuration
-  jpa:
-    hibernate:
-      ddl-auto: update  # Auto-create tables from entities
-    show-sql: true      # Show SQL queries in console
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
 
-# Eureka Client Configuration
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
+
+
+#server:
+#  port: 8081
+#
+#spring:
+#  application:
+#    name: user-service
+#
+#  # Database Configuration
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/users_db
+#    username: ${POSTGRES_USER}
+#    password: ${POSTGRES_PASSWORD}
+#    driver-class-name: org.postgresql.Driver
+#
+#  # JPA Configuration
+#  jpa:
+#    hibernate:
+#      ddl-auto: update  # Auto-create tables from entities
+#    show-sql: true      # Show SQL queries in console
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+#        format_sql: true
+#
+## Eureka Client Configuration
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://localhost:8761/eureka/
+#  instance:
+#    prefer-ip-address: true
