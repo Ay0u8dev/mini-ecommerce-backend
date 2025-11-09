@@ -39,10 +39,21 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,env,configprops
+        include: health,info,metrics,prometheus,refresh
+        basepath: /actuator
   endpoint:
     health:
       show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 logging:
   level:
