@@ -90,7 +90,15 @@ services:
     networks:
       - ecommerce-net
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8888/actuator/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8888/actuator/health",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -113,7 +121,15 @@ services:
     environment:
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8761/actuator/health",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -143,7 +159,15 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8081/actuator/health",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -173,7 +197,15 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8082/actuator/health",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -207,7 +239,15 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8083/actuator/health",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -238,8 +278,17 @@ services:
     environment:
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      API_KEY: ${API_KEY}
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/actuator/health",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -257,11 +306,11 @@ services:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
     networks:
       - ecommerce-net
     depends_on:
@@ -272,7 +321,15 @@ services:
       order-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/-/healthy",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -300,7 +357,15 @@ services:
       prometheus:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/health",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -317,66 +382,3 @@ volumes:
 networks:
   ecommerce-net:
     driver: bridge
-
-#services:
-#  # PostgreSQL for User Service
-#  user-db:
-#    image: postgres:latest
-#    container_name: user-db
-#    environment:
-#      POSTGRES_DB: users_db
-#      POSTGRES_USER: ${POSTGRES_USER}
-#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-#    ports:
-#      - "5432:5432"
-#    volumes:
-#      - user_data:/var/lib/postgresql
-#    networks:
-#      - ecommerce-net
-#
-#  # PostgreSQL for Product Service
-#  product-db:
-#    image: postgres:latest
-#    container_name: product-db
-#    environment:
-#      POSTGRES_DB: products_db
-#      POSTGRES_USER: ${POSTGRES_USER}
-#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-#    ports:
-#      - "5433:5432"  # External: 5433, Internal: 5432
-#    volumes:
-#      - product_data:/var/lib/postgresql
-#    networks:
-#      - ecommerce-net
-#
-#  order-db:
-#    image: postgres:latest
-#    container_name: order-db
-#    environment:
-#      POSTGRES_DB: orders_db
-#      POSTGRES_USER: ${POSTGRES_USER}
-#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-#    ports:
-#      - "5434:5432"
-#    volumes:
-#      - order_data:/var/lib/postgresql
-#    networks:
-#      - ecommerce-net
-#
-#  # Redis for API Gateway (Rate Limiting & Caching)
-#  redis:
-#    image: redis:latest
-#    container_name: redis
-#    ports:
-#      - "6379:6379"
-#    networks:
-#      - ecommerce-net
-#
-#volumes:
-#  user_data:
-#  product_data:
-#  order_data:
-#
-#networks:
-#  ecommerce-net:
-#    driver: bridge

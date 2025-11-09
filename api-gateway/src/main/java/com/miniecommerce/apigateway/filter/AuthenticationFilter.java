@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -25,8 +26,12 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
            "/fallback"
    );
 
-   // Simple API key for demo (change to JWT later!!)
-   private static final String VALID_API_KEY = "example-api-key-12345";
+   // API key injected from environment/config (fallback to demo value). Replace by JWT in production.
+   private final String validApiKey;
+
+   public AuthenticationFilter(@Value("${API_KEY:example-api-key-12345}") String validApiKey) {
+       this.validApiKey = validApiKey;
+   }
 
    @Override
    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -39,9 +44,9 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
        }
 
        // Check for API key in header
-       String apiKey = request.getHeaders().getFirst("X-API-Key");
+    String apiKey = request.getHeaders().getFirst("X-API-Key");
 
-       if (apiKey == null || !apiKey.equals(VALID_API_KEY)) {
+    if (apiKey == null || !apiKey.equals(validApiKey)) {
            log.warn("Unauthorized access attempt to: {}", path);
 
            ServerHttpResponse response = exchange.getResponse();
