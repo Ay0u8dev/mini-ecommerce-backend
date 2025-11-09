@@ -56,47 +56,78 @@ This repository implements a microservices e‑commerce backend:
 
 ```mermaid
 flowchart LR
-  subgraph Client
-    A[Client / Frontend]
+  %% Top-level clients
+  subgraph Clients
+    client[Browser / API Client]
   end
 
-  A -->|HTTP + X-API-Key| GW(API Gateway :8080)
-  GW <-->|Service Discovery| EU[Eureka :8761]
-  CS[Config Server :8888] -->|Config centrally| GW
-  CS --> US
-  CS --> PS
-  CS --> OS
+  %% Infrastructure
+  subgraph Infrastructure
+    gw[API Gateway :8080]
+    eureka[Eureka Server :8761]
+    config[Config Server :8888]
+    redis[(Redis)]
+  end
 
+  %% Business services
   subgraph Business Services
-    US[User Service :8081]
-    PS[Product Service :8082]
-    OS[Order Service :8083]
+    user[User Service :8081]
+    product[Product Service :8082]
+    order[Order Service :8083]
   end
 
+  %% Data stores
   subgraph Databases
-    UDB[(users_db :5432)]
-    PDB[(products_db :5433)]
-    ODB[(orders_db :5434)]
+    udb[(Postgres users_db :5432)]
+    pdb[(Postgres products_db :5433)]
+    odb[(Postgres orders_db :5434)]
   end
 
-  subgraph Monitoring
-    PR[Prometheus :9090]
-    GR[Grafana :3000]
+  %% Observability
+  subgraph Observability
+    prom[Prometheus :9090]
+    graf[Grafana :3000]
   end
 
-  GW --> US
-  GW --> PS
-  GW --> OS
+  %% Client to gateway
+  client -->|HTTP + X-API-Key| gw
 
-  OS -->|Feign + Resilience4j| US
-  OS -->|Feign + Resilience4j| PS
+  %% Discovery and config
+  gw <-->|Service Discovery| eureka
+  config -->|Centralized config| gw
+  config --> user
+  config --> product
+  config --> order
 
-  US --> UDB
-  PS --> PDB
-  OS --> ODB
+  %% Gateway routing
+  gw --> user
+  gw --> product
+  gw --> order
+  gw --- redis
 
-  PR <--> GW & US & PS & OS & CS & EU
-  GR --> PR
+  %% Inter-service calls
+  order -- Feign + LoadBalancer --> user
+  order -- Feign + LoadBalancer --> product
+
+  %% Persistence
+  user --> udb
+  product --> pdb
+  order --> odb
+
+  %% Metrics pipeline
+  prom <-- scrape /actuator/prometheus --> gw
+  prom <-- scrape --> user
+  prom <-- scrape --> product
+  prom <-- scrape --> order
+  prom <-- scrape --> config
+  prom <-- scrape --> eureka
+  graf --> prom
+
+  %% Styling for clarity
+  style redis fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px,stroke-dasharray: 3 3
+  style udb fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px
+  style pdb fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px
+  style odb fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px
 ```
 
 ## Services
@@ -192,20 +223,20 @@ docker compose down
 
 Routing (from `config-repo/api-gateway.yml`):
 
-- `/api/users/**` → `lb://user-service` (réécrit en `/users/**`)
-- `/api/products/**` → `lb://product-service` (réécrit en `/products/**`)
-- `/api/orders/**` → `lb://order-service` (réécrit en `/orders/**`)
+- `/api/users/**` → `lb://user-service` (rewritten to `/users/**`)
+- `/api/products/**` → `lb://product-service` (rewritten to `/products/**`)
+- `/api/orders/**` → `lb://order-service` (rewritten to `/orders/**`)
 
 Global filters:
 
-- CircuitBreaker (fallback vers `/fallback/...`)
-- Retry (GET/POST sur `BAD_GATEWAY`, `GATEWAY_TIMEOUT`)
-- RequestRateLimiter (Redis) — ex: `replenishRate: 10`, `burstCapacity: 20` sur certaines routes
+- CircuitBreaker (fallback to `/fallback/...`)
+- Retry (GET/POST on `BAD_GATEWAY`, `GATEWAY_TIMEOUT`)
+- RequestRateLimiter (Redis) — e.g., `replenishRate: 10`, `burstCapacity: 20` on selected routes
 
 Security (demo level — replace with JWT/OAuth in prod):
 
-- Filtre `AuthenticationFilter` (Gateway) — exige l’en‑tête `X-API-Key: example-api-key-12345`
-- Endpoints publics : préfixes `/gateway/info`, `/gateway/routes`, `/actuator`, `/fallback`
+- `AuthenticationFilter` (Gateway) — requires header `X-API-Key: <value>`
+- Public endpoints: prefixes `/gateway/info`, `/gateway/routes`, `/actuator`, `/fallback`
 
 API Key: provided by `API_KEY` env var (default `example-api-key-12345` in `.env.example`).
 
