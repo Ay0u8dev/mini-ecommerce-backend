@@ -34,7 +34,6 @@ Production‑style e‑commerce backend built with decoupled microservices (User
 - [Resilience & Inter‑Service Communication](#resilience--inter-service-communication)
 - [Observability](#observability)
 - [Project Structure](#project-structure)
-- [Tests](#tests)
 - [Try It](#try-it)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap / Ideas](#roadmap--ideas)
