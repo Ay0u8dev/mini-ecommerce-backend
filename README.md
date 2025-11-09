@@ -288,17 +288,6 @@ mini-ecommerce-backend/
    └─ grafana/provisioning/
 ```
 
-## Tests
-
-Each Maven subproject contains its tests. Run:
-
-```powershell
-# depuis un dossier de service (Windows)
-./mvnw.cmd test
-```
-
-Surefire reports are generated under `target/surefire-reports`.
-
 ## Try It
 
 Swagger UI (test directly on each service):
