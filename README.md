@@ -12,8 +12,7 @@
 
 Production‑style e‑commerce backend built with decoupled microservices (Users, Products, Orders). Features service discovery (Eureka), centralized configuration (Spring Cloud Config), an API Gateway (routing, retries, circuit breakers, Redis rate limiting), per‑service PostgreSQL storage, and full observability via Micrometer/Prometheus/Grafana.
 
-> TL;DR
->
+
 > - Start everything (databases, microservices, monitoring): `docker compose up -d --build`
 > - API Gateway: http://localhost:8080 — requires header `X-API-Key: $env:API_KEY` (default: `example-api-key-12345`)
 > - Services: Users (8081), Products (8082), Orders (8083) — exposed through the gateway under `/api/...`
