@@ -13,7 +13,7 @@
 
 Production‑style e‑commerce backend built with decoupled microservices (Users, Products, Orders, Notifications). Features service discovery (Eureka), centralized configuration (Spring Cloud Config), an API Gateway (routing, retries, circuit breakers, Redis rate limiting), event-driven notifications (Apache Kafka + email), per‑service PostgreSQL storage, and full observability via Micrometer/Prometheus/Grafana.
 
-> **TL;DR Quick Start**
+> **Quick Start**
 >
 > - **Prerequisites**: Docker Desktop, PowerShell (Windows) or Bash (Linux/Mac)
 > - **Start**: `docker compose up -d --build` (builds and starts all services)
