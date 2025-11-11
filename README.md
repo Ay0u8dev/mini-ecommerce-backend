@@ -10,14 +10,16 @@
 
 </div>
 
-Production‑style e‑commerce backend built with decoupled microservices (Users, Products, Orders). Features service discovery (Eureka), centralized configuration (Spring Cloud Config), an API Gateway (routing, retries, circuit breakers, Redis rate limiting), per‑service PostgreSQL storage, and full observability via Micrometer/Prometheus/Grafana.
+Production‑style e‑commerce backend built with decoupled microservices (Users, Products, Orders, Notifications). Features service discovery (Eureka), centralized configuration (Spring Cloud Config), an API Gateway (routing, retries, circuit breakers, Redis rate limiting), event-driven notifications (Kafka), per‑service PostgreSQL storage, and full observability via Micrometer/Prometheus/Grafana.
 
-
-> - Start everything (databases, microservices, monitoring): `docker compose up -d --build`
+> TL;DR
+>
+> - Start everything (databases, microservices, Kafka, monitoring): `docker compose up -d --build`
 > - API Gateway: http://localhost:8080 — requires header `X-API-Key: $env:API_KEY` (default: `example-api-key-12345`)
-> - Services: Users (8081), Products (8082), Orders (8083) — exposed through the gateway under `/api/...`
+> - Services: Users (8081), Products (8082), Orders (8083), Notifications (8084) — exposed through the gateway under `/api/...`
 > - Discovery (Eureka): http://localhost:8761
 > - Config Server: http://localhost:8888/actuator/health
+> - Kafka UI: http://localhost:8090
 > - Prometheus: http://localhost:9090 — Grafana: http://localhost:3000 (admin/admin123)
 
 ---
@@ -44,7 +46,8 @@ Production‑style e‑commerce backend built with decoupled microservices (User
 
 This repository implements a microservices e‑commerce backend:
 
-- 3 decoupled business services (User, Product, Order) each with its dedicated PostgreSQL database
+- 4 decoupled business services (User, Product, Order, Notification) each with its dedicated PostgreSQL database or message consumer
+- Event-driven notifications via Apache Kafka (email alerts, order confirmations)
 - API Gateway (Spring Cloud Gateway) for routing, retries, fallbacks, circuit breaking, and Redis rate limiting
 - Centralized configuration (Spring Cloud Config) + service discovery (Eureka)
 - Out‑of‑the‑box observability via Actuator + Micrometer Prometheus + Prometheus + Grafana
@@ -67,11 +70,18 @@ flowchart LR
     redis[(Redis)]
   end
 
+  %% Messaging
+  subgraph Messaging
+    kafka[Kafka :9092]
+    kafkaui[Kafka UI :8090]
+  end
+
   %% Business services
   subgraph Business Services
     user[User Service :8081]
     product[Product Service :8082]
     order[Order Service :8083]
+    notif[Notification Service :8084]
   end
 
   %% Data stores
@@ -96,6 +106,7 @@ flowchart LR
   config --> user
   config --> product
   config --> order
+  config --> notif
 
   %% Gateway routing
   gw --> user
@@ -107,6 +118,11 @@ flowchart LR
   order -- Feign + LoadBalancer --> user
   order -- Feign + LoadBalancer --> product
 
+  %% Kafka messaging
+  order -- Publish events --> kafka
+  kafka -- Consume events --> notif
+  kafkaui -.-> kafka
+
   %% Persistence
   user --> udb
   product --> pdb
@@ -117,12 +133,14 @@ flowchart LR
   prom <-- scrape --> user
   prom <-- scrape --> product
   prom <-- scrape --> order
+  prom <-- scrape --> notif
   prom <-- scrape --> config
   prom <-- scrape --> eureka
   graf --> prom
 
   %% Styling for clarity
   style redis fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px,stroke-dasharray: 3 3
+  style kafka fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px,stroke-dasharray: 3 3
   style udb fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px
   style pdb fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px
   style odb fill:#f6f8fa,stroke:#c0c0c0,stroke-width:1px
@@ -130,23 +148,29 @@ flowchart LR
 
 ## Services
 
-| Component       | Port | Role / Responsibility                                       |
-| --------------- | ---- | ----------------------------------------------------------- |
-| API Gateway     | 8080 | Routing, CORS, CircuitBreaker, Retry, Rate limiting (Redis) |
-| Eureka Server   | 8761 | Service registry (discovery)                                |
-| Config Server   | 8888 | Centralized configuration (native profile)                  |
-| User Service    | 8081 | User management + PostgreSQL `users_db`                     |
-| Product Service | 8082 | Product catalog + PostgreSQL `products_db`                  |
-| Order Service   | 8083 | Order processing, Feign calls to Users/Products             |
-| Prometheus      | 9090 | Scrapes Actuator Prometheus endpoints                       |
-| Grafana         | 3000 | Dashboards & metrics visualization                          |
+| Component            | Port | Role / Responsibility                                         |
+| -------------------- | ---- | ------------------------------------------------------------- |
+| API Gateway          | 8080 | Routing, CORS, CircuitBreaker, Retry, Rate limiting (Redis)   |
+| Eureka Server        | 8761 | Service registry (discovery)                                  |
+| Config Server        | 8888 | Centralized configuration (native profile)                    |
+| User Service         | 8081 | User management + PostgreSQL `users_db`                       |
+| Product Service      | 8082 | Product catalog + PostgreSQL `products_db`                    |
+| Order Service        | 8083 | Order processing, Feign calls to Users/Products, Kafka events |
+| Notification Service | 8084 | Email notifications via Kafka consumer                        |
+| Kafka                | 9092 | Event streaming (order events, notifications)                 |
+| Kafka UI             | 8090 | Web UI for Kafka cluster management                           |
+| Prometheus           | 9090 | Scrapes Actuator Prometheus endpoints                         |
+| Grafana              | 3000 | Dashboards & metrics visualization                            |
 
 - Config Server (`config-server`): centralized configuration (native profile, mounts `config-repo`).
 - Eureka Server (`eureka`): service registry (UI at `http://localhost:8761`).
 - API Gateway (`api-gateway`): discovery-based dynamic routing, global CORS, circuit breakers, retries, Redis rate limiting, fallbacks.
 - User Service (`user-service`): user management, PostgreSQL `users_db`.
 - Product Service (`product-service`): product catalog, PostgreSQL `products_db`.
-- Order Service (`order-service`): order orchestration, Feign calls to user/product services, PostgreSQL `orders_db`.
+- Order Service (`order-service`): order orchestration, Feign calls to user/product services, publishes events to Kafka, PostgreSQL `orders_db`.
+- Notification Service (`notification-service`): consumes Kafka events, sends email notifications via SMTP (Gmail).
+- Kafka + Zookeeper: event streaming platform for asynchronous messaging.
+- Kafka UI: web-based management UI for Kafka topics, consumers, and messages.
 - Monitoring: Prometheus (scraping Actuator metrics) + Grafana (pre‑provisioned dashboards).
 
 ## Tech Stack
@@ -154,9 +178,11 @@ flowchart LR
 - Language / Build: Java 17, Maven
 - Spring Boot 3 (Web, Validation, Data JPA, Actuator), HikariCP, Hibernate
 - Spring Cloud 2024.x (Gateway, Config, Netflix Eureka, OpenFeign, LoadBalancer, Bootstrap)
+- Messaging: Apache Kafka, Spring Kafka
 - Resilience: Resilience4j (CircuitBreaker, Retry, RateLimiter) + AOP
 - Data: PostgreSQL (database per service)
 - Caching / rate limiting: Redis (Gateway limiter)
+- Email: Spring Mail (SMTP)
 - Observability: Actuator + Micrometer (Prometheus), Prometheus, Grafana
 - Containers: Docker, Docker Compose
 
@@ -172,20 +198,23 @@ Databases (containers):
 
 Expected variables (used by Compose & services) — see `.env.example` and copy to `.env`:
 
-| Variable                 | Description                                      | Example                                            |
-| ------------------------ | ------------------------------------------------ | -------------------------------------------------- |
-| `POSTGRES_USER`          | PostgreSQL user (shared across DB containers)    | `postgres`                                         |
-| `POSTGRES_PASSWORD`      | PostgreSQL password                              | `postgres`                                         |
-| `SPRING_PROFILES_ACTIVE` | Config Server profile (native for Docker)        | `native`                                           |
-| `API_KEY`                | API key accepted by Gateway (`X-API-Key` header) | `example-api-key-12345`                            |
-| `GIT_URI`                | (Optional) Git repo URL for external config      | `https://github.com/your-org/your-config-repo.git` |
-| `GIT_USERNAME`           | (Optional) Git basic auth user                   | `your-user`                                        |
-| `GIT_PASSWORD`           | (Optional) Git token/password                    | `***`                                              |
+| Variable            | Description                                      | Example                                            |
+| ------------------- | ------------------------------------------------ | -------------------------------------------------- |
+| `POSTGRES_USER`     | PostgreSQL user (shared across DB containers)    | `postgres`                                         |
+| `POSTGRES_PASSWORD` | PostgreSQL password                              | `postgres`                                         |
+| `API_KEY`           | API key accepted by Gateway (`X-API-Key` header) | `example-api-key-12345`                            |
+| `EMAIL_USERNAME`    | Gmail address for SMTP (Notification service)    | `your-email@gmail.com`                             |
+| `EMAIL_PASSWORD`    | Gmail app password (not account password)        | `your-app-password`                                |
+| `EMAIL_PORT`        | SMTP port                                        | `587`                                              |
+| `EMAIL_ENABLED`     | Enable/disable email sending                     | `true`                                             |
+| `GIT_URI`           | (Optional) Git repo URL for external config      | `https://github.com/your-org/your-config-repo.git` |
+| `GIT_USERNAME`      | (Optional) Git basic auth user                   | `your-user`                                        |
+| `GIT_PASSWORD`      | (Optional) Git token/password                    | `***`                                              |
 
 Central config: `config-repo/`
 
 - `application.yml` (shared): Actuator exposure, common Eureka settings, logging
-- Per service: `eureka-server.yml`, `api-gateway.yml`, `user-service.yml`, `product-service.yml`, `order-service.yml`
+- Per service: `eureka-server.yml`, `api-gateway.yml`, `user-service.yml`, `product-service.yml`, `order-service.yml`, `notification-service.yml`
 
 ## Quick Start (Docker Compose)
 
@@ -208,6 +237,7 @@ docker compose up -d --build
 
 - Gateway: http://localhost:8080/actuator/health
 - Eureka: http://localhost:8761
+- Kafka UI: http://localhost:8090
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 (admin / admin123)
 
@@ -275,13 +305,15 @@ mini-ecommerce-backend/
 │  ├─ eureka-server.yml
 │  ├─ user-service.yml
 │  ├─ product-service.yml
-│  └─ order-service.yml
+│  ├─ order-service.yml
+│  └─ notification-service.yml
 ├─ api-gateway/
 ├─ config-server/
 ├─ eureka/
 ├─ user-service/
 ├─ product-service/
 ├─ order-service/
+├─ notification-service/
 └─ monitoring/
    ├─ prometheus/prometheus.yml
    └─ grafana/provisioning/
@@ -294,8 +326,13 @@ Swagger UI (test directly on each service):
 - Users: http://localhost:8081/swagger-ui/index.html
 - Products: http://localhost:8082/swagger-ui/index.html
 - Orders: http://localhost:8083/swagger-ui/index.html
+- Notifications: http://localhost:8084/swagger-ui/index.html
 
-Note: Swagger UI is served by each service; it isn’t proxied through the Gateway routes.
+Kafka UI (monitor topics and messages):
+
+- http://localhost:8090
+
+Note: Swagger UI is served by each service; it isn't proxied through the Gateway routes.
 
 Or use these basic sample calls (PowerShell). Ensure `API_KEY` is exported / in `.env` and stack is running.
 
@@ -317,6 +354,8 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/orders" -Headers 
 - DB connection failures → verify `.env` creds and Postgres ports (5432/5433/5434).
 - Missing Prometheus metrics → wait for services to report `UP` at `/actuator/health`.
 - Empty Grafana dashboards → verify Prometheus datasource and provisioning folders.
+- Kafka not starting → ensure Zookeeper is healthy; check `docker logs kafka`.
+- Email not sending → verify Gmail app password (not account password) and `EMAIL_ENABLED=true` in `.env`.
 
 ## Roadmap / Ideas
 
@@ -324,7 +363,7 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/orders" -Headers 
 - Add dedicated Auth service (user registration, roles, tokens)
 - Implement distributed tracing (OpenTelemetry + Jaeger)
 - Add integration tests & contract tests (Spring Cloud Contract)
-- Introduce message broker (Kafka) for event-driven inventory/order flow
+- Expand Kafka usage: inventory updates, real-time stock alerts, order saga patterns
 - Blue/green or canary deployment documentation (Kubernetes manifests)
 - Security hardening: rate limiter policies, input validation tests, secrets management (Vault)
 

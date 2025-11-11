@@ -1,8 +1,10 @@
 package com.miniecommerce.productservice.service;
 
 import com.miniecommerce.productservice.entity.Product;
+import com.miniecommerce.productservice.event.ProductEvent;
 import com.miniecommerce.productservice.exception.InsufficientStockException;
 import com.miniecommerce.productservice.exception.ResourceNotFoundException;
+import com.miniecommerce.productservice.kafka.ProductEventProducer;
 import com.miniecommerce.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,9 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductEventProducer productEventProducer;
+
+    private static final int LOW_STOCK_THRESHOLD = 10;
 
     public List<Product> getAllProducts() {
         log.info("Fetching all products");
@@ -32,6 +37,17 @@ public class ProductService {
         log.info("Creating new product: {}", product.getName());
         Product savedProduct = productRepository.save(product);
         log.info("Product created successfully with id: {}", savedProduct.getId());
+
+        // PUBLISH PRODUCT_CREATED EVENT
+        productEventProducer.sendProductEvent(
+                ProductEvent.createProductCreatedEvent(
+                        savedProduct.getId(),
+                        savedProduct.getName(),
+                        savedProduct.getPrice(),
+                        savedProduct.getStock(),
+                        savedProduct.getCategory()
+                )
+        );
         return savedProduct;
     }
 
@@ -86,6 +102,24 @@ public class ProductService {
         product.setStock(newStock);
         Product updatedProduct = productRepository.save(product);
         log.info("Stock updated successfully. New stock: {}", updatedProduct.getStock());
+
+        // CHECK AND PUBLISH STOCK EVENTS
+        checkAndPublishStockEvents(updatedProduct);
+
         return updatedProduct;
+    }
+
+    private void checkAndPublishStockEvents(Product product) {
+        if (product.getStock() == 0) {
+            log.warn("⚠️ Product {} is OUT OF STOCK", product.getName());
+            productEventProducer.sendProductEvent(
+                    ProductEvent.createStockOutEvent(product.getId(), product.getName())
+            );
+        } else if (product.getStock() > 0 && product.getStock() <= LOW_STOCK_THRESHOLD) {
+            log.warn("⚠️ Product {} has LOW STOCK: {}", product.getName(), product.getStock());
+            productEventProducer.sendProductEvent(
+                    ProductEvent.createStockLowEvent(product.getId(), product.getName(), product.getStock())
+            );
+        }
     }
 }

@@ -1,8 +1,10 @@
 package com.miniecommerce.userservice.service;
 
 import com.miniecommerce.userservice.entity.User;
+import com.miniecommerce.userservice.event.UserEvent;
 import com.miniecommerce.userservice.exception.ResourceAlreadyExistsException;
 import com.miniecommerce.userservice.exception.ResourceNotFoundException;
+import com.miniecommerce.userservice.kafka.UserEventProducer;
 import com.miniecommerce.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,7 @@ import java.util.List;
 @Slf4j
 public class UserService {
     private final UserRepository userRepository;
+    private final UserEventProducer userEventProducer;
 
     public List<User> getAllUsers() {
         log.info("Fetching all users");
@@ -37,6 +40,16 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         log.info("User created successfully with id: {}", savedUser.getId());
+
+        // PUBLISH USER_CREATED EVENT
+        userEventProducer.sendUserEvent(
+                UserEvent.createUserCreatedEvent(
+                        savedUser.getId(),
+                        savedUser.getName(),
+                        savedUser.getEmail()
+                )
+        );
+
         return savedUser;
     }
 
@@ -57,6 +70,16 @@ public class UserService {
 
         User updatedUser = userRepository.save(user);
         log.info("User updated successfully");
+
+        // PUBLISH USER_UPDATED EVENT
+        userEventProducer.sendUserEvent(
+                UserEvent.createUserUpdatedEvent(
+                        updatedUser.getId(),
+                        updatedUser.getName(),
+                        updatedUser.getEmail()
+                )
+        );
+
         return updatedUser;
     }
 

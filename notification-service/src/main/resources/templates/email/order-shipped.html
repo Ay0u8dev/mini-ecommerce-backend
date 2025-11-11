@@ -1,10 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Shipped</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #2196F3;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+        }
+        .shipping-info {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 20px 0;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
-$END$
+<div class="header">
+    <h1>📦 Your Order Has Shipped!</h1>
+</div>
+
+<div class="content">
+    <p>Dear <strong th:text="${customerName}">Customer</strong>,</p>
+
+    <p>Great news! Your order <strong th:text="'#' + ${orderId}">#12345</strong> has been shipped and is on its way to you!</p>
+
+    <div class="shipping-info">
+        <h3>Shipping Information</h3>
+        <p><strong>Estimated Delivery:</strong> <span th:text="${estimatedDelivery}">3-5 business days</span></p>
+        <p><strong>Tracking Number:</strong> <span th:text="${trackingNumber}">TRK123456789</span></p>
+    </div>
+
+    <center>
+        <a href="#" class="button">Track Shipment</a>
+    </center>
+
+    <p style="margin-top: 30px;">Thank you for shopping with us!</p>
+</div>
+
+<div class="footer">
+    <p>© 2024 E-Commerce Platform. All rights reserved.</p>
+</div>
 </body>
 </html>

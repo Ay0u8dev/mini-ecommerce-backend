@@ -1,10 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low Stock Alert</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #FF9800;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #fff3cd;
+            padding: 30px;
+            border: 1px solid #ffc107;
+            border-radius: 0 0 5px 5px;
+        }
+        .alert-box {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #FF9800;
+        }
+        .stock-level {
+            font-size: 2em;
+            font-weight: bold;
+            color: #FF9800;
+            text-align: center;
+            padding: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 20px 0;
+            background-color: #FF9800;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
-$END$
+<div class="header">
+    <h1>⚠️ Low Stock Alert</h1>
+</div>
+
+<div class="content">
+    <p><strong>Attention Procurement Team,</strong></p>
+
+    <div class="alert-box">
+        <h3>Product Alert</h3>
+        <p><strong>Product:</strong> <span th:text="${productName}">Product Name</span></p>
+        <p><strong>Product ID:</strong> <span th:text="${productId}">123</span></p>
+
+        <div class="stock-level">
+            <span th:text="${stock}">5</span> units remaining
+        </div>
+
+        <p style="color: #d32f2f;">⚠️ Stock level has fallen below the threshold. Immediate restocking recommended.</p>
+    </div>
+
+    <center>
+        <a href="#" class="button">View Inventory</a>
+    </center>
+</div>
+
+<div class="footer">
+    <p>This is an automated alert from the E-Commerce Inventory System</p>
+</div>
 </body>
 </html>

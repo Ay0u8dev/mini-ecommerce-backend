@@ -1,10 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+        }
+        .welcome-box {
+            background-color: white;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .feature {
+            padding: 15px;
+            margin: 10px 0;
+            background-color: white;
+            border-left: 4px solid #667eea;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
-$END$
+<div class="header">
+    <h1>👋 Welcome to E-Commerce!</h1>
+</div>
+
+<div class="content">
+    <div class="welcome-box">
+        <h2>Hello <span th:text="${userName}">User</span>! 🎉</h2>
+        <p>We're thrilled to have you join our community!</p>
+    </div>
+
+    <p>Your account has been successfully created with the email: <strong th:text="${email}">user@example.com</strong></p>
+
+    <h3>What you can do now:</h3>
+
+    <div class="feature">
+        <strong>🛍️ Browse Products</strong>
+        <p>Explore our wide range of products across different categories.</p>
+    </div>
+
+    <div class="feature">
+        <strong>🎯 Personalized Recommendations</strong>
+        <p>Get product recommendations based on your preferences.</p>
+    </div>
+
+    <div class="feature">
+        <strong>📦 Track Orders</strong>
+        <p>Monitor your orders from purchase to delivery.</p>
+    </div>
+
+    <div class="feature">
+        <strong>💳 Secure Checkout</strong>
+        <p>Enjoy fast and secure payment options.</p>
+    </div>
+
+    <center>
+        <a href="#" class="button">Start Shopping</a>
+    </center>
+
+    <p style="margin-top: 30px;">If you have any questions, our support team is here to help!</p>
+</div>
+
+<div class="footer">
+    <p>© 2024 E-Commerce Platform. All rights reserved.</p>
+    <p>You're receiving this email because you created an account with us.</p>
+</div>
 </body>
 </html>

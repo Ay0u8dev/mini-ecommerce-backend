@@ -6,9 +6,11 @@ import com.miniecommerce.orderservice.dto.OrderRequest;
 import com.miniecommerce.orderservice.dto.ProductDTO;
 import com.miniecommerce.orderservice.dto.UserDTO;
 import com.miniecommerce.orderservice.entity.Order;
+import com.miniecommerce.orderservice.event.OrderEvent;
 import com.miniecommerce.orderservice.exception.BadRequestException;
 import com.miniecommerce.orderservice.exception.ResourceNotFoundException;
 import com.miniecommerce.orderservice.exception.ServiceCommunicationException;
+import com.miniecommerce.orderservice.kafka.OrderEventProducer;
 import com.miniecommerce.orderservice.repository.OrderRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -28,6 +30,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserClient userClient;
     private final ProductClient productClient;
+    private final OrderEventProducer orderEventProducer;
 
     @RateLimiter(name = "orderService")
     public List<Order> getAllOrders() {
@@ -108,42 +111,56 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         log.info("Order created with id: {}", savedOrder.getId());
 
+        // PUBLISH ORDER_CREATED EVENT
+        orderEventProducer.sendOrderEvent(
+                OrderEvent.createOrderCreatedEvent(
+                        savedOrder.getId(),
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        product.getId(),
+                        product.getName(),
+                        request.getQuantity(),
+                        totalPrice
+                )
+        );
+
         // 6. Update stock with circuit breaker
         try {
             productClient.updateStock(product.getId(), -request.getQuantity());
             savedOrder.setStatus("COMPLETED");
             orderRepository.save(savedOrder);
             log.info("Product stock updated successfully");
+
+            // PUBLISH ORDER_COMPLETED EVENT
+            orderEventProducer.sendOrderEvent(
+                    OrderEvent.createOrderCompletedEvent(
+                            savedOrder.getId(),
+                            user.getId(),
+                            user.getName(),
+                            user.getEmail(),
+                            product.getId(),
+                            product.getName(),
+                            request.getQuantity(),
+                            totalPrice
+                    )
+            );
         } catch (Exception e) {
             log.error("Failed to update product stock: {}", e.getMessage());
             savedOrder.setStatus("FAILED");
             orderRepository.save(savedOrder);
+
+            // PUBLISH ORDER_FAILED EVENT
+            orderEventProducer.sendOrderEvent(
+                    OrderEvent.createOrderFailedEvent(savedOrder.getId(), e.getMessage())
+            );
+
             throw new ServiceCommunicationException("Product Service",
                     "Failed to update stock. Order marked as FAILED: " + e.getMessage());
         }
 
         return savedOrder;
     }
-
-    // Fallback method for createOrder
-//    public Order createOrderFallback(OrderRequest request, Exception ex) {
-//        log.error("Circuit breaker activated for createOrder. Creating fallback order", ex);
-//
-//        // Create a pending order that can be processed later
-//        Order fallbackOrder = new Order();
-//        fallbackOrder.setUserId(request.getUserId());
-//        fallbackOrder.setProductId(request.getProductId());
-//        fallbackOrder.setQuantity(request.getQuantity());
-//        fallbackOrder.setTotalPrice(0.0);
-//        fallbackOrder.setStatus("PENDING_RETRY");
-//        fallbackOrder.setUserName("Unknown - Service Down");
-//        fallbackOrder.setProductName("Unknown - Service Down");
-//
-//        Order saved = orderRepository.save(fallbackOrder);
-//        log.info("Fallback order created with id: {} and status: PENDING_RETRY", saved.getId());
-//
-//        return saved;
-//    }
 
     @CircuitBreaker(name = "userService")
     @Retry(name = "userService")
