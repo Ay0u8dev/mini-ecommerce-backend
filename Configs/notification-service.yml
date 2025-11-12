@@ -1,0 +1,46 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: notification-service
+
+  # Email Configuration
+  mail:
+    host: smtp.gmail.com
+    port: ${EMAIL_PORT:587}
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    default-encoding: UTF-8
+
+  # Thymeleaf Configuration
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
+
+
+# Email Settings
+notification:
+  email:
+    from: ${EMAIL_USERNAME}
+    enabled: ${EMAIL_ENABLED:true}
+    async: true
+
+logging:
+  level:
+    com.miniecommerce.notificationservice: DEBUG
+    org.springframework.mail: DEBUG
+    org.apache.kafka: INFO
